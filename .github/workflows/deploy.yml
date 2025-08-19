@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Установка Node.js и сборка проекта
+      - name: Setup Node and Build
+        run: |
+          npm install
+          npm run build
+          
+          # Проверяем что собралось
+          echo "Содержимое dist/:"
+          ls -la dist/
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Prepare gh-pages branch
+        run: |
+          git fetch origin gh-pages || true
+          if git show-ref --quiet refs/remotes/origin/gh-pages; then
+            git checkout gh-pages
+            git reset --hard origin/gh-pages
+          else
+            git checkout --orphan gh-pages
+            git commit --allow-empty -m "Initial gh-pages commit"
+          fi
+
+      - name: Deploy files
+        run: |
+          # Полная очистка ветки
+          git rm -rf . || true
+          
+          # Копируем ВСЁ содержимое папки dist
+          cp -a dist/. .
+          
+          # Копируем CNAME отдельно (если существует)
+          git checkout main -- CNAME 2>/dev/null || true
+          
+          # Для SPA приложений
+          echo "/* /index.html 200" > _redirects
+          
+          # Проверяем наличие обязательных файлов
+          if [ ! -f "index.html" ]; then
+            echo "ERROR: index.html not found in dist/"
+            exit 1
+          fi
+          
+          git add -A
+          git commit -m "Deploy: $(date '+%Y-%m-%d %H:%M:%S')"
+          git push origin gh-pages --force
