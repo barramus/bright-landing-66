@@ -23,7 +23,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # целевой репозиторий тимлида
+          # целевой репозиторий dradns
           TARGET_REPO="dradns/Analyst3.0-landing"
 
           # добавляем удалённый с https + PAT
